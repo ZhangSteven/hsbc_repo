@@ -138,8 +138,8 @@ def getDateFromFilename(inputFile):
 
 	Repo Exposure Trades and Collateral Position by Agreement_CN LFAM HKH CRHKH_24_04_2019_01_00_08.xlsx
 	"""
-	tokens = inputFile.split('\\')[-1].split('.')[0].split()[-1].split('_')
-	return str(tokens[3]) + '-' + str(tokens[2]) + '-' + str(tokens[1])
+	dateString = inputFile.split('\\')[-1].split('.')[0].split('_')[0]
+	return dateString[4:8] + '-' + dateString[2:4] + '-' + dateString[0:2]
 
 
 
