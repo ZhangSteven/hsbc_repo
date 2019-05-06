@@ -2,9 +2,11 @@
 # 
 from xlrd import open_workbook
 from functools import partial
-from itertools import takewhile
+from itertools import takewhile, chain
+from operator import getitem
+from os.path import join
 from hsbc_repo.utility import getCurrentDirectory, getStartRow, getCustodian
-from utils.utility import fromExcelOrdinal
+from utils.utility import fromExcelOrdinal, writeCsv
 from investment_lookup.id_lookup import get_investment_Ids
 import logging
 logger = logging.getLogger(__name__)
@@ -109,9 +111,59 @@ def genevaPosition(portfolioId, position):
 
 
 
+def dictToValues(keys, d):
+	"""
+	[List] keys, [Dictionary] d => [Iterator] values
+
+	retrieve the list of values corresponding to the keys from the dictionary.
+	"""
+	return map(partial(getitem, d), keys)
+
+
+
+def getOutputFileName(inputFile, outputDir, prefix):
+	"""
+	[String] inputFile, [String] outputDir, [String] prefix =>
+		[String] output file name (with path)
+	"""
+	return join(outputDir, prefix + getDateFromFilename(inputFile) + '.csv')
+
+
+
+def getDateFromFilename(inputFile):
+	"""
+	[String] inputFile => [String] date (yyyy-mm-dd)
+
+	inputFile filename looks like (after stripping path):
+
+	Repo Exposure Trades and Collateral Position by Agreement_CN LFAM HKH CRHKH_24_04_2019_01_00_08.xlsx
+	"""
+	tokens = inputFile.split('\\')[-1].split('.')[0].split()[-1].split('_')
+	return str(tokens[3]) + '-' + str(tokens[2]) + '-' + str(tokens[1])
+
+
+
+def toCsv(portfolio, inputFile, outputDir, prefix):
+	"""
+	[String] portfolio,	[String] intputFile, [String] outputDir, [String] prefix
+		=> [String] outputFile
+
+	Side effect: create an output csv file
+	"""
+	gPositions = map(partial(genevaPosition, portfolio)
+					, readHolding(open_workbook(inputFile).sheet_by_index(0)
+								 , getStartRow()))
+	headers = ['portfolio', 'custodian', 'date', 'geneva_investment_id',
+				'ISIN', 'bloomberg_figi', 'name', 'currency', 'quantity']
+	rows = map(partial(dictToValues, headers), gPositions)
+	outputFile = getOutputFileName(inputFile, outputDir, prefix)
+	writeCsv(outputFile, chain([headers], rows), '|')
+	return outputFile
+
+
 
 if __name__ == '__main__':
 	import logging.config
 	logging.config.fileConfig('logging.config', disable_existing_loggers=False)
 
-	
+		
