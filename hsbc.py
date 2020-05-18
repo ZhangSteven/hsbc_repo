@@ -157,7 +157,7 @@ def toCsv(portfolio, inputFile, outputDir, prefix):
 				'ISIN', 'bloomberg_figi', 'name', 'currency', 'quantity']
 	rows = map(partial(dictToValues, headers), gPositions)
 	outputFile = getOutputFileName(inputFile, outputDir, prefix)
-	writeCsv(outputFile, chain([headers], rows), '|')
+	writeCsv(outputFile, chain([headers], rows), delimiter='|')
 	return outputFile
 
 
